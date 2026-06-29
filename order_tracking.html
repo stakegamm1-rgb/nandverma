@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Order Map Tracking - HD Mockup</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <style>
+    :root {
+      --primary-color: #FF5252;
+      --primary-glow: rgba(255, 82, 82, 0.45);
+      --bg-dark: #0F172A;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --success-color: #10B981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #020617 0%, #0F172A 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* Outer Presentation Container */
+    .mockup-showcase {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100vh;
+      padding: 20px;
+      perspective: 1000px;
+    }
+
+    .showcase-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      color: #FFF;
+      text-shadow: 0 0 10px rgba(255, 82, 82, 0.3);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #FFF, #FF8E8E);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Device Mockup Shell */
+    .device-container {
+      width: 393px;
+      height: 852px; /* iPhone 15 Pro Ratio */
+      background: #000;
+      border-radius: 50px;
+      box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.75),
+                  0 0 0 12px #1E293B,
+                  0 0 0 13px #334155,
+                  0 0 20px 5px rgba(255, 82, 82, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 4px solid #000;
+    }
+
+    /* iPhone Dynamic Island */
+    .dynamic-island {
+      width: 110px;
+      height: 30px;
+      background: #000;
+      border-radius: 20px;
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .dynamic-island:hover {
+      width: 280px;
+      height: 38px;
+    }
+
+    .island-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      color: #fff;
+      font-size: 11px;
+    }
+
+    .dynamic-island:hover .island-content {
+      opacity: 1;
+    }
+
+    .island-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .island-pulse {
+      width: 6px;
+      height: 6px;
+      background: var(--primary-color);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Screen Elements */
+    .screen {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Custom Header */
+    .app-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 55px 20px 15px 20px;
+      z-index: 999;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0) 100%);
+    }
+
+    .header-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+    }
+
+    .header-btn:hover {
+      background: var(--primary-color);
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-main);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Leaflet Map container */
+    #map {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    /* Dark Map Overlays to look ultra premium */
+    .map-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.6);
+      background: linear-gradient(0deg, rgba(15,23,42,0.6) 0%, rgba(15,23,42,0) 40%);
+    }
+
+    /* Custom Scooter Icon Styles */
+    .scooter-icon-container {
+      background: var(--primary-color);
+      border: 3px solid #FFF;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px var(--primary-glow);
+      position: relative;
+    }
+
+    .scooter-pulse {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--primary-color);
+      opacity: 0.6;
+      animation: pulse 1.8s infinite;
+      z-index: -1;
+    }
+
+    /* Floating Tracking Card */
+    .tracking-card {
+      position: absolute;
+      bottom: 20px;
+      left: 15px;
+      right: 15px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 28px;
+      padding: 22px;
+      z-index: 999;
+      backdrop-filter: blur(16px) saturate(120%);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      animation: slideUp 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    /* Bottom Info Elements */
+    .delivery-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .status-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .status-time {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .status-time span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .time-badge {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success-color);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Custom Progress Steps */
+    .progress-bar-container {
+      position: relative;
+      margin-bottom: 22px;
+    }
+
+    .progress-line-bg {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+
+    .progress-line-active {
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+      border-radius: 2px;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 70%;
+      transform: translateY(-50%);
+      z-index: 2;
+      transition: width 1s ease;
+    }
+
+    .progress-dots {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      z-index: 3;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #334155;
+      border: 3px solid #1E293B;
+      transition: all 0.3s ease;
+    }
+
+    .dot.completed {
+      background: var(--primary-color);
+      border-color: #1E293B;
+      box-shadow: 0 0 8px var(--primary-glow);
+    }
+
+    .dot.active {
+      background: var(--success-color);
+      border-color: #FFF;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+      transform: scale(1.2);
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .progress-labels span {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .progress-labels span.active {
+      color: var(--text-main);
+    }
+
+    /* Driver Section */
+    .driver-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .driver-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .driver-avatar-wrapper {
+      position: relative;
+    }
+
+    .driver-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #FF8E8E, #FF5252);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .driver-badge {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      background: #EAB308;
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 6px;
+      border: 1.5px solid #1E293B;
+    }
+
+    .driver-details h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+
+    .driver-details p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .action-btn.call-btn {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+      color: var(--success-color);
+    }
+
+    .action-btn.call-btn:hover {
+      background: var(--success-color);
+      color: #fff;
+    }
+
+    /* Order Details Accordion */
+    .order-details-drawer {
+      border-top: 1px solid var(--border-color);
+      padding-top: 14px;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .drawer-content {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .drawer-content.expanded {
+      max-height: 120px;
+    }
+
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .order-item span.item-name {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    /* Custom map styling to match dark premium theme */
+    .leaflet-container {
+      background: var(--bg-dark) !important;
+    }
+
+    /* Pulse animation */
+    @keyframes pulse {
+      0% {
+        transform: scale(0.9);
+        opacity: 0.8;
+      }
+      70% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Leaflet popup/ui customizations */
+    .leaflet-bar {
+      border: 1px solid var(--border-color) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-bar a {
+      background-color: var(--card-bg) !important;
+      color: var(--text-main) !important;
+      border-bottom: 1px solid var(--border-color) !important;
+    }
+    .leaflet-bar a:hover {
+      background-color: var(--primary-color) !important;
+      color: #fff !important;
+    }
+
+    .user-marker-container {
+      width: 24px;
+      height: 24px;
+      background: var(--success-color);
+      border: 3px solid #FFF;
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.7);
+    }
+
+    .restaurant-marker-container {
+      width: 32px;
+      height: 32px;
+      background: #F59E0B;
+      border: 3px solid #FFF;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.7);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mockup-showcase">
+    <div class="showcase-title">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color)"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+      Live Tracking Screen Mockup
+    </div>
+
+    <!-- Phone container simulating iPhone 15 Pro screen -->
+    <div class="device-container">
+      <!-- Dynamic Island -->
+      <div class="dynamic-island" id="dynamicIsland">
+        <div class="island-content">
+          <div class="island-left">
+            <div class="island-pulse"></div>
+            <span style="font-weight:700; color:#FF5252">Order En Route</span>
+          </div>
+          <div class="island-right" id="islandTimer">8m 42s</div>
+        </div>
+      </div>
+
+      <div class="screen">
+        <!-- Overlay for Dark Futuristic Feel -->
+        <div class="map-overlay"></div>
+
+        <!-- Custom Header -->
+        <header class="app-header">
+          <div class="header-btn" onclick="alert('Go back')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </div>
+          <div class="header-title">Live Tracking</div>
+          <div class="header-btn" onclick="alert('Help & Support')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+        </header>
+
+        <!-- Leaflet Map Container -->
+        <div id="map"></div>
+
+        <!-- Floating Glassmorphic Card -->
+        <div class="tracking-card">
+          
+          <div class="delivery-status">
+            <div>
+              <div class="status-title">On the way</div>
+              <div class="status-time" id="mainETA">08 <span>mins</span></div>
+            </div>
+            <div class="time-badge">ETA 1:45 PM</div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-bar-container">
+            <div class="progress-line-bg"></div>
+            <div class="progress-line-active" id="progressBar"></div>
+            <div class="progress-dots">
+              <div class="dot completed"></div>
+              <div class="dot completed"></div>
+              <div class="dot active"></div>
+              <div class="dot"></div>
+            </div>
+            <div class="progress-labels">
+              <span class="active">Ordered</span>
+              <span class="active">Picked Up</span>
+              <span class="active">Near You</span>
+              <span>Delivered</span>
+            </div>
+          </div>
+
+          <!-- Driver Details -->
+          <div class="driver-section">
+            <div class="driver-info">
+              <div class="driver-avatar-wrapper">
+                <div class="driver-avatar">VR</div>
+                <div class="driver-badge">4.9 ★</div>
+              </div>
+              <div class="driver-details">
+                <h4>Vikram Rathore</h4>
+                <p id="driverStatus">Valet • On his scooter</p>
+              </div>
+            </div>
+            <div class="action-buttons">
+              <div class="action-btn" onclick="alert('Opening chat with Vikram...')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="action-btn call-btn" onclick="alert('Calling Vikram...')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Summary Accordion -->
+          <div class="order-details-drawer">
+            <div class="drawer-header" onclick="toggleDrawer()">
+              <span>ORDER DETAILS (#48201)</span>
+              <svg id="drawerArrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s ease"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="drawer-content" id="drawerContent">
+              <div class="order-item">
+                <span class="item-name">Double Cheese Margherita Pizza (Large)</span>
+                <span>x 1</span>
+              </div>
+              <div class="order-item">
+                <span class="item-name">Garlic Breadsticks with Jalapeno Dip</span>
+                <span>x 1</span>
+              </div>
+              <div class="order-item">
+                <span class="item-name">Chocolate Lava Cake</span>
+                <span>x 2</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle items drawer
+    let drawerExpanded = false;
+    function toggleDrawer() {
+      drawerExpanded = !drawerExpanded;
+      const content = document.getElementById('drawerContent');
+      const arrow = document.getElementById('drawerArrow');
+      if (drawerExpanded) {
+        content.classList.add('expanded');
+        arrow.style.transform = 'rotate(180deg)';
+      } else {
+        content.classList.remove('expanded');
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // Initialize Leaflet Map with beautiful custom Dark Tiles
+    // Center map around a premium looking urban street layout
+    const map = L.map('map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([28.6139, 77.2090], 15); // Centered at New Delhi for demonstration
+
+    // Premium Dark matter map layer from CartoDB
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20
+    }).addTo(map);
+
+    // Coordinate Points for Restaurant, Route, and Customer
+    const restaurantPos = [28.6190, 77.2030];
+    const customerPos = [28.6080, 77.2180];
+    
+    // Smooth route coordinate generation
+    const routeCoordinates = [
+      restaurantPos,
+      [28.6180, 77.2045],
+      [28.6165, 77.2060],
+      [28.6150, 77.2085],
+      [28.6130, 77.2105],
+      [28.6110, 77.2135],
+      [28.6095, 77.2160],
+      customerPos
+    ];
+
+    // Add Restaurant Marker
+    const restaurantIcon = L.divIcon({
+      html: '<div class="restaurant-marker-container">🍕</div>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+    L.marker(restaurantPos, {icon: restaurantIcon}).addTo(map);
+
+    // Add User (Customer) Marker
+    const userIcon = L.divIcon({
+      html: '<div class="user-marker-container"></div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+    L.marker(customerPos, {icon: userIcon}).addTo(map);
+
+    // Draw the Route Line (Glowing Gradient effect using multiple overlapping polylines)
+    // Outer Glow Line
+    const routeGlow = L.polyline(routeCoordinates, {
+      color: '#FF5252',
+      weight: 8,
+      opacity: 0.35
+    }).addTo(map);
+
+    // Core Solid Line
+    const routeSolid = L.polyline(routeCoordinates, {
+      color: '#FF7676',
+      weight: 4,
+      opacity: 0.9,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(map);
+
+    // Add Rider (Scooter) Marker with pulsing effect
+    const riderIcon = L.divIcon({
+      html: `
+        <div class="scooter-icon-container">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5.5" cy="17.5" r="2.5"/>
+            <circle cx="18.5" cy="17.5" r="2.5"/>
+            <path d="M8 17.5h8"/>
+            <path d="M12 17.5V14"/>
+            <path d="M12 14h5"/>
+            <path d="M17 14l1.5-4h2.5"/>
+            <path d="M12 14L9 9H5"/>
+          </svg>
+          <div class="scooter-pulse"></div>
+        </div>
+      `,
+      iconSize: [42, 42],
+      iconAnchor: [21, 21]
+    });
+
+    // Start rider halfway through the route
+    let currentRouteIndex = 2; 
+    let riderMarker = L.marker(routeCoordinates[currentRouteIndex], {icon: riderIcon}).addTo(map);
+
+    // Auto fit map bounds to show complete path nicely
+    map.fitBounds(L.polyline(routeCoordinates).getBounds(), {
+      padding: [60, 60]
+    });
+
+    // Live Animation: Animate rider movement along the route coordinates
+    function animateRider() {
+      currentRouteIndex++;
+      if (currentRouteIndex >= routeCoordinates.length) {
+        // Reset to restaurant to loop the demo
+        currentRouteIndex = 0;
+      }
+      
+      const newPos = routeCoordinates[currentRouteIndex];
+      
+      // Update marker position with a smooth pan
+      riderMarker.setLatLng(newPos);
+      
+      // Update dynamic progress bar & ETA values for realism
+      const remainingSteps = routeCoordinates.length - 1 - currentRouteIndex;
+      const progressPercent = (currentRouteIndex / (routeCoordinates.length - 1)) * 100;
+      
+      document.getElementById('progressBar').style.width = `${progressPercent}%`;
+      
+      // Update ETA text dynamically
+      const etaMins = Math.max(1, remainingSteps * 2);
+      document.getElementById('mainETA').innerHTML = `${String(etaMins).padStart(2, '0')} <span>mins</span>`;
+      document.getElementById('islandTimer').innerHTML = `${etaMins}m ${Math.floor(Math.random() * 60)}s`;
+
+      if (remainingSteps === 0) {
+        document.getElementById('driverStatus').innerText = 'Valet • Arrived at your location!';
+        document.getElementById('driverStatus').style.color = '#10B981';
+      } else {
+        document.getElementById('driverStatus').innerText = 'Valet • On his scooter';
+        document.getElementById('driverStatus').style.color = '#94A3B8';
+      }
+
+      // Smoothly pan map to center rider and customer
+      const currentBounds = L.latLngBounds([newPos, customerPos]);
+      map.panTo(currentBounds.getCenter(), {animate: true, duration: 1});
+    }
+
+    // Animate every 4 seconds
+    setInterval(animateRider, 4000);
+
+    // Island interaction
+    const island = document.getElementById('dynamicIsland');
+    island.addEventListener('click', () => {
+      alert('Order tracking pinned to Live Activities!');
+    });
+  </script>
+</body>
+</html>
