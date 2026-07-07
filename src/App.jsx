@@ -56,8 +56,7 @@ export default function App() {
   const [typingText, setTypingText] = useState('');
   const [simApp, setSimApp] = useState('food');
   const [activeSection, setActiveSection] = useState('home');
-
-  // Simulator: Chat State
+  const [isSliderHovered, setIsSliderHovered] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { type: 'received', text: 'Hi Nand, we need a chat feature with offline sync for our app.', time: '9:42 AM' },
     { type: 'sent', text: 'Sure! I can build that using Socket.io and Redux-Saga for state sync.', time: '9:43 AM' }
@@ -77,6 +76,7 @@ export default function App() {
     projects: useRef(null),
     contact: useRef(null),
   };
+  const sliderRef = useRef(null);
 
   // WhatsApp Link Helper
   const getWhatsAppLink = (message = "Hi Nand, I saw your portfolio and would like to connect!") => {
@@ -139,6 +139,29 @@ export default function App() {
       revealElements.forEach((el) => revealObserver.unobserve(el));
     };
   }, []);
+
+  // --- Projects Slider Auto-Scroll Logic ---
+  useEffect(() => {
+    let animationId;
+    const slider = sliderRef.current;
+    
+    if (slider && !isSliderHovered) {
+      const scroll = () => {
+        // Reset scroll position if we've reached the halfway point (since items are doubled)
+        if (slider.scrollLeft >= (slider.scrollWidth / 2)) {
+          slider.scrollLeft = 0;
+        } else {
+          slider.scrollLeft += 1; // Adjust speed here
+        }
+        animationId = requestAnimationFrame(scroll);
+      };
+      animationId = requestAnimationFrame(scroll);
+    }
+    
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
+  }, [isSliderHovered]);
 
   // --- Typing Text Animation ---
   useEffect(() => {
@@ -389,6 +412,17 @@ export default function App() {
       icon: "https://play-lh.googleusercontent.com/_V9RF_v5gWdxBeEP_OTzq8ahBPAjYdS_olg_OlrutKibOFk9ej7JXwbqbcRTSduYV-nKWKaCZt7PYpgmD4bCc3w",
       color1: "#1e1e38",
       color2: "#2d3748"
+    },
+    {
+      id: 12,
+      title: "Dhurina",
+      category: "store",
+      emoji: "📚",
+      desc: "A comprehensive e-learning platform featuring live interactive classes, secure course purchases, and offline video downloads.",
+      tech: ["React Native", "Redux Saga", "Video Streaming", "In-App Purchases", "Offline Storage", "Push Notifications"],
+      link: "https://play.google.com/store/search?q=dhurina&c=apps&hl=en_IN",
+      color1: "#3b82f6",
+      color2: "#1d4ed8"
     }
   ];
 
@@ -700,7 +734,14 @@ export default function App() {
               <p className="section-lead">A collection of custom applications launched on the Play Store, plus key platform solutions.</p>
             </div>
 
-            <div className="projects-slider-container reveal">
+            <div 
+              className="projects-slider-container reveal" 
+              ref={sliderRef}
+              onMouseEnter={() => setIsSliderHovered(true)}
+              onMouseLeave={() => setIsSliderHovered(false)}
+              onTouchStart={() => setIsSliderHovered(true)}
+              onTouchEnd={() => setIsSliderHovered(false)}
+            >
               <div className="projects-slider-track">
                 {/* Double the list of projects for seamless infinite horizontal scrolling */}
                 {[...projects, ...projects].map((project, idx) => (

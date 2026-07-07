@@ -855,28 +855,25 @@ header.scrolled .nav-container {
 }
 
 .projects-slider-container {
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     width: 100%;
     position: relative;
     padding: 1.5rem 0;
     mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    /* Hide scrollbar for a cleaner look */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.projects-slider-container::-webkit-scrollbar {
+    display: none;
 }
 
 .projects-slider-track {
     display: flex;
     gap: 2rem;
     width: max-content;
-    animation: scroll-projects 45s linear infinite;
-}
-
-.projects-slider-container:hover .projects-slider-track {
-    animation-play-state: paused; /* Pause scrolling on hover for accessibility */
-}
-
-@keyframes scroll-projects {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
 }
 
 .project-card {
